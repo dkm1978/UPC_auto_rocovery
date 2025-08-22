@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 #
 #	$VER 0.1 22.07.2018 18:37:52 
 #
@@ -41,8 +41,8 @@ OFF=False
 def setup():
 
 	signal.signal(signal.SIGINT, signal_handler)
-	printer('{IN}\tUPC {O}UBEE EVW3226{W} password tool\n')
-	printer('{IN}\t\t by pr0teus@null.net in 2018\n\n')
+	printer('{IN}\tUPC {O}UBEE EVW3226{W} password tool v2\n')
+	printer('{IN}\t\t by ProteusPL\n\n')
 	
 #--------------------------------------------------------------------------
 def signal_handler(sig, frame):
@@ -52,7 +52,7 @@ def signal_handler(sig, frame):
 		subprocess.call(['rm', 'test-01.csv'],stdout=DN)
 		#printer('\n{ER}\tPrzewano przez urzytkownika\n')
 		return None
-        printer('\n{ER}\tDzialanie programu zostalo przerwane !\n\n')
+		printer('\n{ER}\tDzialanie programu zostalo przerwane !\n\n')
         sys.exit(0)
 #--------------------------------------------------------------------------
 
@@ -308,12 +308,28 @@ def saveupc():
 		plik.close()
 		time.sleep(.5)
 		printer('{PL}\tDane zapisane.\n')
-		printer('{IN}\tWykonaj reset komputera i odpal program ponownie.\n\n') 
-		sys.exit()
+		#printer('{IN}\tWykonaj reset komputera i odpal program ponownie.\n\n') 
+		#sys.exit()
 	else:
 		printer('{ER}\tBrak danych do zapisania.\n')
-		printer('{IN}\tWykonaj reset komputera aby wznowic dzialanie sieci\n\n') 
-		sys.exit()
+		#sys.exit()
+	
+#--------------------------------------------------------------------------
+
+def restorenet():
+
+	printer('{IN}\tPrzywracam dzialanie sieci\n') 
+	process = subprocess.Popen('ifconfig '+wlanmon+' down', shell=True, stdout=subprocess.PIPE)
+	process.wait()
+	printer('{IN}\tPrzywracam orginalny MAC karty sieciowej.\n\n') 
+	process = subprocess.Popen('macchanger -p '+wlanmon, shell=True, stdout=subprocess.PIPE)
+	process.wait()
+	process = subprocess.Popen('iwconfig '+wlanmon+' mode managed', shell=True, stdout=subprocess.PIPE)
+	process.wait()
+	process = subprocess.Popen('ifconfig '+wlanmon+' up', shell=True, stdout=subprocess.PIPE)
+	process.wait()
+	process = subprocess.Popen('systemctl restart NetworkManager', shell=True, stdout=subprocess.PIPE)
+	process.wait()
 
 #--------------------------------------------------------------------------
 
@@ -350,6 +366,16 @@ else:
 	killall()
 	scanner()
 	waitscan()
+	restorenet()
+
+	if os.path.isfile('./upc_auto.dat'):
+		printer('{PL}\t2 faza\n')
+		loadupc()
+		printer('{IN}\tDane wczytane.\n')
+		GetWlan()
+		TestPass()
+		#subprocess.call(['rm', 'upc_auto.dat'],stdout=DN)
+		sys.exit()
 	
 print('\n\n')
 #--------------------------------------------------------------------------
